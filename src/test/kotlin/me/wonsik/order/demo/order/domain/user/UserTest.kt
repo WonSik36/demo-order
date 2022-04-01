@@ -2,11 +2,16 @@ package me.wonsik.order.demo.order.domain.user
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import me.wonsik.order.demo.order.domain.common.Address
+import java.time.LocalDate
 
 internal class UserTest : BehaviorSpec() {
+    private val address = Address("state", "city", "street", "subStreet", 12345)
+
     init {
         given("사용자의 나이가 17세이다.") {
-            val user = User(1, "alice", 17, Sex.MALE, "abc@example.com")
+            val birthDay: LocalDate = LocalDate.now().minusYears(17)
+            val user = User(1, "alice", birthDay, Sex.MALE, "abc@example.com", address)
 
             `when`("성인 여부를 검증한다.") {
                 val result = user.isAdult()
@@ -26,7 +31,8 @@ internal class UserTest : BehaviorSpec() {
         }
 
         given("사용자의 나이가 18세이다.") {
-            val user = User(1, "alice", 18, Sex.MALE, "abc@example.com")
+            val birthDay: LocalDate = LocalDate.now().minusYears(18)
+            val user = User(1, "alice", birthDay, Sex.MALE, "abc@example.com", address)
 
             `when`("성인 여부를 검증한다.") {
                 val result = user.isAdult()
