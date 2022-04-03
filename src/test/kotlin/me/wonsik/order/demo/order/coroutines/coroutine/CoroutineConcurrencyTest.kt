@@ -1,4 +1,4 @@
-package me.wonsik.order.demo.order
+package me.wonsik.order.demo.order.coroutines.coroutine
 
 
 import io.kotest.core.spec.style.FreeSpec
@@ -17,7 +17,7 @@ import kotlin.system.measureTimeMillis
  * 참조
  * @see <a href="https://dalinaum.github.io/coroutines-example/7">공유 객체, Mutex, Actor</a>
  */
-class CoroutineTest : FreeSpec({
+class CoroutineConcurrencyTest : FreeSpec({
     "Thread-safe in coroutines" - {
         "problem case" {
             var counter = 0
