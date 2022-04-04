@@ -8,6 +8,9 @@ import kotlin.random.Random
 
 /**
  * @author 정원식 (wonsik.cheung)
+ *
+ * 참조
+ * @see <a href="https://dalinaum.github.io/coroutines-example/8">플로우 기초</a>
  */
 class FlowBasicTest: FreeSpec({
     "Hello Flow" {
