@@ -11,7 +11,7 @@ plugins {
 
 group = "me.wonsik"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 configurations {
     compileOnly {
@@ -23,7 +23,7 @@ repositories {
     mavenCentral()
 }
 
-val kotestVersion = "5.0.3"
+val kotestVersion = "5.2.2"
 val queryDslVersion = "5.0.0"
 
 dependencies {
@@ -67,7 +67,7 @@ allOpen {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
 }
 
