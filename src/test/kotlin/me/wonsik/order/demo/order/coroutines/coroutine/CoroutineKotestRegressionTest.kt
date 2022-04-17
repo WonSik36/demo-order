@@ -12,6 +12,10 @@ import kotlin.time.Duration.Companion.days
  * @author 정원식 (wonsik.cheung)
  *
  * kotest 의 coroutine 환경이 제대로 설정되어 있는지 확인하는 regression 테스트
+ *
+ * kotlinx-coroutines-test 와는 delay 가 다르게 동작하는것으로 보임
+ * kotlinx-coroutines-test.runTest: delay 스킵
+ * testCoroutineDispatcher: delay 스킵하지 않음
  */
 @ExperimentalKotest
 @ExperimentalCoroutinesApi
