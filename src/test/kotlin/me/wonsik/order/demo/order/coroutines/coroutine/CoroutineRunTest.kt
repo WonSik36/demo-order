@@ -2,9 +2,11 @@ package me.wonsik.order.demo.order.coroutines.coroutine
 
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import kotlin.random.Random
 
 
 /**
@@ -89,4 +91,13 @@ class CoroutineRunTest {
         }
         deferred.await()
     }
+}
+
+@ExperimentalStdlibApi
+suspend fun random(): Int {
+    println(coroutineContext[CoroutineDispatcher])
+    println(Thread.currentThread().name)
+    delay(500)
+    
+    return Random.nextInt(0, 500)
 }
