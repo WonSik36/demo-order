@@ -63,8 +63,8 @@ internal class FlowContextAndBufferTest(): FreeSpec({
     "collectLatest" {
         runBlocking {
             val time = measureTimeMillis {
-                simpleWithDelay().conflate()
-                    .collect { value ->
+                simpleWithDelay()
+                    .collectLatest { value ->
                         println("값 $value 를 처리하기 시작합니다.")
                         delay(300)
                         println(value)
