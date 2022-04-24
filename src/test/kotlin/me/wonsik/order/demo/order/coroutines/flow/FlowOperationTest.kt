@@ -134,6 +134,42 @@ class FlowOperationTest: FreeSpec({
 
         println(set)
     }
+
+    "zip" {
+        val nums = (1..3).asFlow()
+        val strs = flowOf("one", "two", "three")
+
+        nums.zip(strs) { a,b ->
+            "$a is $b"
+        }.collect { println(it) }
+
+        // 가장 짧은 길이로 zip 됨
+        val nums2 = (1..2).asFlow()
+        nums2.zip(strs) { a,b ->
+            "$a is $b"
+        }.collect { println(it) }
+
+        val strs2 = flowOf("one", "two")
+        nums.zip(strs2) { a,b ->
+            "$a is $b"
+        }.collect { println(it) }
+    }
+
+    "combine" {
+        val nums = (1..3).asFlow().onEach { delay(100L) }
+        val strs = flowOf("one", "two", "three").onEach { delay(200L) }
+
+        // 가장 최신의 데이터가 들어오면 emit
+        nums.combine(strs) { a,b ->
+            "$a is $b"
+        }.collect { println(it) }
+
+        // 1 is one
+        // 2 is one
+        // 3 is one
+        // 3 is two
+        // 3 is three
+    }
 })
 
 fun flowRandomInt() = flow {
