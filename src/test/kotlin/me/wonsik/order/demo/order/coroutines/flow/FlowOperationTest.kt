@@ -15,6 +15,8 @@ import kotlin.random.nextInt
  * @see <a href="https://dalinaum.github.io/coroutines-example/12">플로우 결합하기</a>
  * @see <a href="https://dalinaum.github.io/coroutines-example/13">플로우 플래트닝하기</a>
  */
+@FlowPreview
+@ExperimentalCoroutinesApi
 class FlowOperationTest: FreeSpec({
     "map" {
         flowRandomInt().map {
@@ -170,6 +172,42 @@ class FlowOperationTest: FreeSpec({
         // 3 is two
         // 3 is three
     }
+
+    "flatMapConcat" {
+        // 이전 플로우가 끝나면 실행
+        val startTime = System.currentTimeMillis() // remember the start time
+        (1..3).asFlow().onEach { delay(100) } // a number every 100 ms
+            .flatMapConcat {
+                flowEmitTwice(it)
+            }
+            .collect { value -> // collect and print
+                println("$value at ${System.currentTimeMillis() - startTime} ms from start")
+            }
+    }
+
+    "flatMapMerge" {
+        // 이전 플로우가 끝나지 않아도 실행
+        val startTime = System.currentTimeMillis() // remember the start time
+        (1..3).asFlow().onEach { delay(100) } // a number every 100 ms
+            .flatMapMerge {
+                flowEmitTwice(it)
+            }
+            .collect { value -> // collect and print
+                println("$value at ${System.currentTimeMillis() - startTime} ms from start")
+            }
+    }
+
+    "flatMapLatest" {
+        // 이전 플로우 취소
+        val startTime = System.currentTimeMillis() // remember the start time
+        (1..3).asFlow().onEach { delay(100) } // a number every 100 ms
+            .flatMapLatest {
+                flowEmitTwice(it)
+            }
+            .collect { value -> // collect and print
+                println("$value at ${System.currentTimeMillis() - startTime} ms from start")
+            }
+    }
 })
 
 fun flowRandomInt() = flow {
@@ -177,4 +215,10 @@ fun flowRandomInt() = flow {
         emit(Random.nextInt(0, 500))
         delay(10L)
     }
+}
+
+fun flowEmitTwice(i: Int): Flow<String> = flow {
+    emit("$i: First")
+    delay(500) // wait 500 ms
+    emit("$i: Second")
 }
