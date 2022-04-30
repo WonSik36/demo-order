@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.map
 
 /**
  * @author 정원식 (wonsik.cheung)
+ *
+ * 참조
+ * @see <a href="https://dalinaum.github.io/coroutines-example/14">플로우 예외처리하기</a>
  */
 class FlowExceptionTest : FreeSpec({
     "try-catch 1" {

@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.onCompletion
 
 /**
  * @author 정원식 (wonsik.cheung)
+ *
+ * 참조
+ * @see <a href="https://dalinaum.github.io/coroutines-example/15">플로우 완료처리하기</a>
+ * @see <a href="https://dalinaum.github.io/coroutines-example/16">플로우 런칭</a>
  */
 class FlowCompletion : FreeSpec({
     "finally" - {
