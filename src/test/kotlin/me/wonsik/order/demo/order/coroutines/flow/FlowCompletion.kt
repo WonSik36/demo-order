@@ -1,8 +1,8 @@
 package me.wonsik.order.demo.order.coroutines.flow
 
 import io.kotest.core.spec.style.FreeSpec
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 
 
 /**
@@ -54,6 +54,26 @@ class FlowCompletion : FreeSpec({
                     }
                 }
                 .collect { println(it) }
+        }
+    }
+
+    "launchIn" - {
+        "without launchIn" {
+            simpleFlow()
+                .onEach { delay(100) }
+                .onEach { event -> println("${currentCoroutineContext().job} Event: $event") }
+                .collect()
+            // blocking
+            println("${currentCoroutineContext().job} Done")
+        }
+
+        "with launchIn" {
+            simpleFlow()
+                .onEach { delay(100) }
+                .onEach { event -> println("${currentCoroutineContext().job} Event: $event") }
+                .launchIn(this) // scope.launch { collect() }
+
+            println("${currentCoroutineContext().job} Done")
         }
     }
 })
