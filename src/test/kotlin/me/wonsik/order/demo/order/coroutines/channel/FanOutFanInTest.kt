@@ -21,18 +21,21 @@ class FanOutFanInTest : FreeSpec({
 
     "Fan out" {
         val producer = produceNumbers()
+        val list = MutableList(5) { 0 }
 
         repeat(5) {
             launch {
                 // Producer < Consumer
                 producer.consumeEach { value ->
                     println("${it}가 ${value}을 받았습니다.")
+                    list[it] = list[it] + 1
                 }
             }
         }
 
         delay(20L)
         producer.cancel()   // ProducerCoroutine -> ChannelCoroutine 에서 cancel 되면 안의 코루틴도 cancel 함
+        println(list)   // not equal
     }
 
     "Fan in" {
@@ -46,6 +49,20 @@ class FanOutFanInTest : FreeSpec({
 
         delay(1000L)
         coroutineContext.cancelChildren()
+    }
+
+    "Balancing" {
+        val channel = Channel<Int>()
+        val list = MutableList(5) { 0 }
+
+        for(it in 0 until  5) {
+            retrieveAndSend(channel, list, it)
+        }
+
+        channel.send(1)
+        delay(20L)
+        coroutineContext.cancelChildren()
+        println(list)   // equal
     }
 })
 
@@ -61,5 +78,13 @@ fun CoroutineScope.produceNumbers(channel: SendChannel<Int>, from: Int, interval
 fun CoroutineScope.retrieveNumbers(channel: ReceiveChannel<Int>) = launch {
     channel.consumeEach {
         println("${it}을 받았습니다.")
+    }
+}
+
+fun CoroutineScope.retrieveAndSend(channel: Channel<Int>, list: MutableList<Int>, index: Int) = launch {
+    for (value in channel) {
+        println("$index 가 ${value} 를 받았습니다.")
+        list[index] = list[index] + 1
+        channel.send(value + 1)
     }
 }
