@@ -1,14 +1,9 @@
 package me.wonsik.order.demo.order.coroutines.channel
 
 import io.kotest.core.spec.style.FreeSpec
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.selects.select
 
 
 /**
@@ -64,6 +59,28 @@ class FanOutFanInTest : FreeSpec({
         coroutineContext.cancelChildren()
         println(list)   // equal
     }
+
+    "select" {
+        val fasts = sayFast()
+        val campuses = sayCampus()
+        repeat (5) { value ->
+            select<Unit> {
+                fasts.onReceive {
+                    println("fast[$value]: $it")
+                }
+                campuses.onReceiveCatching {
+                    println("campus[$value]: ${it.getOrNull()}")
+                }
+            }
+        }
+        coroutineContext.cancelChildren()
+
+        // fast[0]: 패스트 [1]
+        // campus[1]: 캠퍼스 [1]
+        // fast[2]: 패스트 [2]
+        // fast[3]: 패스트 [3]
+        // campus[4]: 캠퍼스 [2]
+    }
 })
 
 fun CoroutineScope.produceNumbers(channel: SendChannel<Int>, from: Int, interval: Long) = launch {
@@ -86,5 +103,19 @@ fun CoroutineScope.retrieveAndSend(channel: Channel<Int>, list: MutableList<Int>
         println("$index 가 ${value} 를 받았습니다.")
         list[index] = list[index] + 1
         channel.send(value + 1)
+    }
+}
+
+fun CoroutineScope.sayFast() = produce<String> {
+    for (it in 1..100) {
+        delay(100L)
+        send("패스트 [$it]")
+    }
+}
+
+fun CoroutineScope.sayCampus() = produce<String> {
+    for (it in 1..100) {
+        delay(150L)
+        send("캠퍼스 [$it]")
     }
 }
