@@ -1,15 +1,22 @@
 spring:
-  application.name: avatar-sync-batch
+  application.name: demo-order
 
   jpa:
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+  datasource:
+    hikari:
+      driver-class-name: org.h2.Driver
+      jdbc-url: jdbc:h2:mem:testdb
+      username: sa
 
 logging.level:
   org.hibernate.type.descriptor.sql: trace
+  org.springframework: info
