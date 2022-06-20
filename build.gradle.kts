@@ -21,6 +21,7 @@ configurations {
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 val kotestVersion = "5.2.2"
@@ -43,6 +44,10 @@ dependencies {
     implementation("com.querydsl:querydsl-jpa:$queryDslVersion")
     kapt("com.querydsl:querydsl-apt:$queryDslVersion:jpa")
     runtimeOnly("com.h2database:h2")
+
+    // toString, equals, hashCode
+    implementation("au.com.console:kassava:2.1.0")
+
 
     /* test */
     testImplementation("org.springframework.boot:spring-boot-starter-test") {

@@ -10,7 +10,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
       naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
   datasource:
     hikari:
       driver-class-name: org.h2.Driver

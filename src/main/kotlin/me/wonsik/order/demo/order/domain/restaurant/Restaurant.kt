@@ -1,11 +1,11 @@
-package me.wonsik.order.demo.order.domain.user
+package me.wonsik.order.demo.order.domain.restaurant
 
 import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinHashCode
 import au.com.console.kassava.kotlinToString
 import me.wonsik.order.demo.order.domain.common.Address
 import me.wonsik.order.demo.order.domain.common.BaseEntity
-import java.time.LocalDate
+import me.wonsik.order.demo.order.domain.menu.Menu
 import javax.persistence.*
 
 
@@ -13,18 +13,17 @@ import javax.persistence.*
  * @author 정원식 (wonsik.cheung)
  */
 @Entity
-@Table(name = "user")
-class User(
+@Table(name = "restaurant")
+class Restaurant(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val sequence: Long? = null,
     @Column val name: String,
-    @Column val birthDay: LocalDate?,
-    @Enumerated(EnumType.STRING) val sex: Sex,
-    @Column var email: String,
-    @Embedded var address: Address
+    @Embedded val address: Address,
+    @OneToMany(mappedBy = "restaurant") val menus: MutableList<Menu> = arrayListOf()
 ) : BaseEntity() {
-    val age: Int = calcAge(LocalDate.now(), birthDay)
 
-    fun isAdult(): Boolean = age >= ADULT_AGE
+    fun makeMenu(name: String, description: String) =
+        Menu(null, name, description, this)
+
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = equalsAndHashCodeProperties)
 
@@ -32,19 +31,8 @@ class User(
 
     override fun toString() = kotlinToString(properties = toStringProperties)
 
-
     companion object {
-        const val ADULT_AGE: Int = 18
-
-        private fun calcAge(now: LocalDate, birthDay: LocalDate?): Int {
-            birthDay ?: return 0
-
-            val period = birthDay.until(now)
-
-            return period.years
-        }
-
-        private val equalsAndHashCodeProperties = arrayOf(User::sequence)
-        private val toStringProperties = arrayOf(User::sequence, User::name)
+        private val equalsAndHashCodeProperties = arrayOf(Restaurant::sequence)
+        private val toStringProperties = arrayOf(Restaurant::sequence, Restaurant::name)
     }
 }
