@@ -229,6 +229,7 @@ internal class PersistenceContextTest : FreeSpec() {
         } catch (e: Exception) {
             e.printStackTrace()
             tx.rollback()
+            throw e
         } finally {
             em.close()
         }
