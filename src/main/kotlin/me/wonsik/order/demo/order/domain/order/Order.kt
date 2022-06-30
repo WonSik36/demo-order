@@ -4,6 +4,7 @@ import au.com.console.kassava.kotlinEquals
 import au.com.console.kassava.kotlinHashCode
 import au.com.console.kassava.kotlinToString
 import me.wonsik.order.demo.order.domain.common.BaseEntity
+import me.wonsik.order.demo.order.domain.menu.Menu
 import me.wonsik.order.demo.order.domain.user.User
 import javax.persistence.*
 
@@ -20,6 +21,11 @@ class Order(
     val orderMenus: MutableList<OrderMenu> = arrayListOf(),
     @Enumerated(EnumType.STRING) var status: OrderStatus
 ) : BaseEntity() {
+
+    fun addMenu(menu: Menu, count: Int = 1) {
+        val orderMenu = OrderMenu(order = this, menu =  menu, count = count)
+        orderMenus.add(orderMenu)
+    }
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = equalsAndHashCodeProperties)
 

@@ -18,11 +18,19 @@ class Restaurant(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val sequence: Long? = null,
     @Column val name: String,
     @Embedded val address: Address,
-    @OneToMany(mappedBy = "restaurant") val menus: MutableList<Menu> = arrayListOf()
+    @OneToMany(
+        mappedBy = "restaurant",
+        cascade = [CascadeType.PERSIST, CascadeType.REMOVE],
+        orphanRemoval = true
+    )
+    val menus: MutableList<Menu> = arrayListOf()
 ) : BaseEntity() {
 
-    fun makeMenu(name: String, description: String) =
-        Menu(null, name, description, this)
+    fun makeMenu(name: String, description: String): Menu {
+        val menu = Menu(null, name, description, this)
+        menus.add(menu)
+        return menu
+    }
 
 
     override fun equals(other: Any?) = kotlinEquals(other = other, properties = equalsAndHashCodeProperties)
