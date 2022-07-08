@@ -17,6 +17,7 @@ import me.wonsik.order.demo.order.domain.user.Sex
 import me.wonsik.order.demo.order.domain.user.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import java.lang.IllegalArgumentException
 import java.time.LocalDate
 import javax.persistence.*
 
@@ -313,6 +314,134 @@ internal class JpqlTest : FreeSpec() {
                 }
             }
         }
+
+        "경로 탐색" - {
+            "상태 필드 경로 탐색" {
+                tx {
+                    val jpql = "select u.name, u.age from User u"
+                    val results = createQuery(jpql).resultList
+
+                    for (r in results) {
+                        r as Array<*>
+                        println("name: ${r[0]}, age: ${r[1]}")
+                    }
+                }
+            }
+
+            "단일 값 연관 경로 탐색" {
+                tx {
+                    val jpql = "select m.restaurant from Menu m"
+                    val results = createQuery(jpql).resultList
+
+                    for (r in results) {
+                        println("restaurant: $r")
+                    }
+                }
+
+                tx {
+                    // 경로 표현식에 의한 묵시적 조인 -> 내부 조인
+                    val jpql = "select m.restaurant.address.city from Menu m"
+                    val results = createQuery(jpql).resultList
+
+                    for (r in results) {
+                        println("city: $r")
+                    }
+                }
+            }
+
+            "컬렉션 값 연관 경로 탐색" {
+                tx {
+                    val jpql = "select r.menus from Restaurant r"
+                    val results = createQuery(jpql).resultList
+
+                    for (r in results) {
+                        println("menus: $r")
+                    }
+                }
+
+                shouldThrow<IllegalArgumentException> {
+                    tx {
+                        // 컬렉션에서 경로 탐색은 불가능
+                        val jpql = "select r.menus.name from Restaurant r"
+                        val results = createQuery(jpql).resultList
+
+                        for (r in results) {
+                            println("name: $r")
+                        }
+                    }
+                }
+
+                tx {
+                    // 조인을 이용해 새로운 별칭 획득 후 탐색 가능
+                    val jpql = "select m.name from Restaurant r join r.menus m"
+                    val results = createQuery(jpql).resultList
+
+                    for (r in results) {
+                        println("name: $r")
+                    }
+                }
+            }
+        }
+
+        "서브 쿼리" - {
+            "기본" {
+                val order = makeOrder()
+
+                tx {
+                    val query = "select u from User u where (select count(o) from Order o where u = o.user) > 0"
+                    val members = createQuery(query).resultList
+
+                    for (m in members) {
+                        println(m)
+                    }
+                }
+
+                tx {
+                    createQuery("delete from OrderMenu om").executeUpdate()
+                    createQuery("delete from Order o").executeUpdate()
+                }
+            }
+
+            "EXISTS" {
+                val order = makeOrder()
+
+                tx {
+                    val query = "select u from User u where exists (select o from Order o where u = o.user)"
+                    val members = createQuery(query).resultList
+
+                    for (m in members) {
+                        println(m)
+                    }
+                }
+
+                tx {
+                    createQuery("delete from OrderMenu om").executeUpdate()
+                    createQuery("delete from Order o").executeUpdate()
+                }
+            }
+
+            "ALL|ANY|SOME" {
+                tx {
+                    val query = "select u from User u where u.birthDay >= all (select u2.birthDay from User u2)"
+                    val members = createQuery(query).resultList
+
+                    for (m in members) {
+                        println(m)
+                    }
+                }
+            }
+
+            "IN" {
+                tx {
+                    val query = "select u from User u where u in (select u2 from User u2 where day(u2.birthDay) = 6)"
+                    val members = createQuery(query).resultList
+
+                    for (m in members) {
+                        println(m)
+                    }
+                }
+            }
+        }
     }
 
 
@@ -352,7 +481,7 @@ internal class JpqlTest : FreeSpec() {
             this
         }
 
-    private fun makeOrder(em: EntityManager): Order {
+    private fun makeOrder(): Order {
         var result: Order? = null
 
         tx {
