@@ -72,3 +72,92 @@
 * HOUR(날짜 타입)
 * MINUTE(날짜 타입)
 * SECOND(날짜 타입)
+
+## 다형성 쿼리
+
+### TYPE
+* 조회 대상을 특정 자식 타입으로 한정할때 주로 사용
+#### JPQL
+```
+select i from Item i where type(i) in (Album, Book)
+```
+
+#### SQL
+```sql
+select
+    item0_.item_id as item_id2_2_,
+    item0_.name as name3_2_,
+    item0_.price as price4_2_,
+    item0_1_.artist as artist1_0_,
+    item0_2_.author as author1_1_,
+    item0_.dtype as dtype1_2_ 
+from
+    item item0_ 
+left outer join
+    album item0_1_ 
+        on item0_.item_id=item0_1_.item_id 
+left outer join
+    book item0_2_ 
+        on item0_.item_id=item0_2_.item_id 
+where
+    item0_.dtype in (
+        'A' , 'B'
+    )
+```
+
+### TREAT
+* 부모 타입을 특정 자식 타입으로 다룰때 사용
+* **자식 타입**에 대해 쿼리하는게 나은듯
+
+#### JPQL (TREAT)
+
+```
+select i from Item i where treat(i as Album).artist = 'artist' and i.name = 'album'
+```
+
+#### SQL (TREAT)
+
+```sql
+select
+    item0_.item_id as item_id2_2_,
+    item0_.name as name3_2_,
+    item0_.price as price4_2_,
+    item0_1_.artist as artist1_0_,
+    item0_2_.author as author1_1_,
+    item0_.dtype as dtype1_2_ 
+from
+    item item0_ 
+inner join
+    album item0_1_ 
+        on item0_.item_id=item0_1_.item_id 
+left outer join
+    book item0_2_ 
+        on item0_.item_id=item0_2_.item_id 
+where
+    item0_1_.artist='artist' 
+    and item0_.name='album'
+```
+
+#### JPQL (자식 타입)
+
+```
+select a from Album a where a.artist = 'artist' and a.name = 'album'
+```
+
+#### SQL (자식 타입)
+
+```sql
+select
+    album0_.item_id as item_id2_2_,
+    album0_1_.name as name3_2_,
+    album0_1_.price as price4_2_,
+    album0_.artist as artist1_0_ 
+from
+    album album0_ 
+inner join
+    item album0_1_ 
+        on album0_.item_id=album0_1_.item_id 
+where
+    album0_.artist='artist' 
+    and album0_1_.name='album'
+```
