@@ -22,7 +22,8 @@ class User(
     @Column var email: String,
     @Embedded var address: Address
 ) : BaseEntity() {
-    val age: Int = calcAge(LocalDate.now(), birthDay)
+    val age: Int
+        get() = calcAge(LocalDate.now(), birthDay)
 
     fun isAdult(): Boolean = age >= ADULT_AGE
 

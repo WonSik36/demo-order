@@ -13,6 +13,8 @@ import me.wonsik.order.demo.order.domain.menu.Menu
 import me.wonsik.order.demo.order.domain.order.Order
 import me.wonsik.order.demo.order.domain.order.OrderStatus
 import me.wonsik.order.demo.order.domain.restaurant.Restaurant
+import me.wonsik.order.demo.order.domain.test.Album
+import me.wonsik.order.demo.order.domain.test.Book
 import me.wonsik.order.demo.order.domain.user.Sex
 import me.wonsik.order.demo.order.domain.user.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -100,7 +102,7 @@ internal class JpqlTest : FreeSpec() {
                     tx {
                         // new 명령어
                         // ORDER BY
-                        val sql = "SELECT new me.wonsik.order.demo.order.jpa.ch10.UserDto(u.name, u.age) FROM User u ORDER BY u.sequence DESC"
+                        val sql = "SELECT new me.wonsik.order.demo.order.jpa.ch10.UserDto(u.name, u.birthDay) FROM User u ORDER BY u.sequence DESC"
                         val query: TypedQuery<UserDto> = createQuery(sql, UserDto::class.java)
                             .setFirstResult(10) // start
                             .setMaxResults(5)   // limit
@@ -135,7 +137,7 @@ internal class JpqlTest : FreeSpec() {
                 "Multiple" - {
                     "스칼라 타입 프로젝션" {
                         tx {
-                            val query: Query = createQuery("SELECT u.name, u.age FROM User u")
+                            val query: Query = createQuery("SELECT u.name, u.birthDay FROM User u")
 
                             val resultList = query.resultList
 
@@ -143,7 +145,7 @@ internal class JpqlTest : FreeSpec() {
 
                             resultList.map { result ->
                                 result as Array<*>
-                                println("username: ${result[0]}, age: ${result[1]}")
+                                println("username: ${result[0]}, birthDay: ${result[1]}")
                             }
                         }
                     }
@@ -170,11 +172,11 @@ internal class JpqlTest : FreeSpec() {
                             val query: Query = createQuery("""
                                     SELECT
                                     COUNT(u),
-                                    COUNT(DISTINCT u.age),
-                                    SUM(u.age),
-                                    AVG(u.age),
-                                    MAX(u.age),
-                                    MIN(u.age)
+                                    COUNT(DISTINCT u.sequence),
+                                    SUM(u.sequence),
+                                    AVG(u.sequence),
+                                    MAX(u.sequence),
+                                    MIN(u.sequence)
                                     FROM User u
                                 """)
 
@@ -186,7 +188,7 @@ internal class JpqlTest : FreeSpec() {
                     "GROUP BY, HAVING" {
                         tx {
                             val query: Query = createQuery("""
-                                SELECT MAX(u.age), COUNT(u.age) as cnt 
+                                SELECT MAX(u.sequence), COUNT(u.sequence) as cnt 
                                 FROM User u
                                 GROUP BY u.name
                                 ORDER BY cnt
@@ -318,12 +320,12 @@ internal class JpqlTest : FreeSpec() {
         "경로 탐색" - {
             "상태 필드 경로 탐색" {
                 tx {
-                    val jpql = "select u.name, u.age from User u"
+                    val jpql = "select u.name, u.birthDay from User u"
                     val results = createQuery(jpql).resultList
 
                     for (r in results) {
                         r as Array<*>
-                        println("name: ${r[0]}, age: ${r[1]}")
+                        println("name: ${r[0]}, birthDay: ${r[1]}")
                     }
                 }
             }
@@ -507,5 +509,5 @@ internal class JpqlTest : FreeSpec() {
 
 data class UserDto(
     val username: String,
-    val age: Int
+    val birthDay: LocalDate
 )
