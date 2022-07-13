@@ -1,5 +1,6 @@
 package me.wonsik.order.demo.order.jpa.ch10
 
+import com.querydsl.core.BooleanBuilder
 import com.querydsl.core.NonUniqueResultException
 import com.querydsl.core.types.Projections
 import com.querydsl.jpa.JPAExpressions
@@ -11,6 +12,7 @@ import io.kotest.core.test.TestCase
 import io.kotest.core.test.TestResult
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.collections.shouldMatchEach
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -357,6 +359,114 @@ internal class QueryDslTest : FreeSpec() {
                 }
             }
         }
+
+        "수정, 삭제 배치 쿼리" - {
+            "Update" {
+                factory {
+                    update(QUser.user)
+                        .where(QUser.user.sequence.mod(2).eq(1))
+                        .set(QUser.user.name, QUser.user.name.append("-odd-number"))
+                        .execute()
+                }
+
+                factory {
+                    val users = select(QUser.user)
+                        .from(QUser.user)
+                        .where(QUser.user.sequence.mod(2).eq(1))
+                        .fetch()
+
+                    users.forEach { u ->
+                        u.name shouldContain "odd-number"
+                    }
+                }
+            }
+
+            "Delete" {
+                factory {
+                    delete(QUser.user)
+                        .where(QUser.user.sequence.mod(2).eq(1))
+                        .execute()
+                }
+
+                factory {
+                    val users = select(QUser.user)
+                        .from(QUser.user)
+                        .where(QUser.user.sequence.mod(2).eq(1))
+                        .fetch()
+
+                    users shouldHaveSize 0
+                }
+            }
+        }
+
+        "동적 쿼리" {
+            factory {
+                val map = mutableMapOf<String, String>()
+                map["name"] = "name"
+                map["emailDomain"] = "example.com"
+
+                val builder = with(BooleanBuilder()) {
+                    if (map.containsKey("name")) {
+                        this.and(QUser.user.name.eq(map["name"]))
+                    }
+
+                    if (map.containsKey("emailDomain")) {
+                        this.and(QUser.user.name.contains(map["emailDomain"]))
+                    }
+
+                    this
+                }
+
+                val users = select(QUser.user)
+                    .from(QUser.user)
+                    .where(builder)
+                    .fetch()
+
+                users shouldHaveSize 0
+            }
+        }
+
+        "메소드 위임" {
+            factory {
+                delete(QUser.user)
+                    .execute()
+            }
+
+            tx {
+                val userWithAge21_0 = makeUser(LocalDate.now().minusYears(21))
+                val userWithAge20_9 = makeUser(LocalDate.now().minusYears(21).plusDays(1))
+                val userWithAge20_0 = makeUser(LocalDate.now().minusYears(20))
+                val userWithAge19_9 = makeUser(LocalDate.now().minusYears(20).plusDays(1))
+
+                persist(userWithAge21_0)
+                persist(userWithAge20_9)
+                persist(userWithAge20_0)
+                persist(userWithAge19_9)
+            }
+
+            factory {
+                val count1 = select(QUser.user)
+                    .from(QUser.user)
+                    .where(QUser.user.hasAge(20))
+                    .fetchCount()
+
+                count1 shouldBe 2
+
+                val count2 = select(QUser.user)
+                    .from(QUser.user)
+                    .where(QUser.user.isOlderThan(20))
+                    .fetchCount()
+
+                count2 shouldBe 1
+
+                val count3 = select(QUser.user)
+                    .from(QUser.user)
+                    .where(QUser.user.isOlderThanOrEqualTo(20))
+                    .fetchCount()
+
+                count3 shouldBe 3
+            }
+        }
     }
 
     private inline fun factory(block: JPAQueryFactory.() -> Unit) =
@@ -390,6 +500,12 @@ internal class QueryDslTest : FreeSpec() {
         User(
             null, "name$idx", birthDay = LocalDate.of(2002, 6, idx % 29),
             Sex.values()[idx % 2], email = "example${idx}@example.com", address
+        )
+
+    private fun makeUser(birthDay: LocalDate) =
+        User(
+            null, "name", birthDay = birthDay,
+            Sex.MALE, email = "example@example.com", address
         )
 
     private fun makeRestaurantsAndMenus(size: Int) = (1..size).map { makeRestaurantAndMenu(it) }.toList()
