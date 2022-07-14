@@ -7,14 +7,13 @@ import io.kotest.core.test.TestResult
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import me.wonsik.order.demo.order.domain.common.Address
 import me.wonsik.order.demo.order.domain.menu.Menu
 import me.wonsik.order.demo.order.domain.order.Order
 import me.wonsik.order.demo.order.domain.order.OrderStatus
 import me.wonsik.order.demo.order.domain.restaurant.Restaurant
-import me.wonsik.order.demo.order.domain.test.Album
-import me.wonsik.order.demo.order.domain.test.Book
 import me.wonsik.order.demo.order.domain.user.Sex
 import me.wonsik.order.demo.order.domain.user.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -440,6 +439,121 @@ internal class JpqlTest : FreeSpec() {
 
                     for (m in members) {
                         println(m)
+                    }
+                }
+            }
+        }
+
+        "벌크 연산" - {
+            "Update" {
+                tx {
+                    val count = createQuery("update User u set u.name = 'bulk'")
+                        .executeUpdate()
+
+                    count shouldBe entitiesSize
+                }
+
+                tx {
+                    val users = createQuery("select u from User u", User::class.java)
+                        .resultList
+
+                    users.forEach {
+                        it.name shouldBe  "bulk"
+                    }
+                }
+            }
+
+            "Delete" {
+                tx {
+                    val count = createQuery("delete from User u")
+                        .executeUpdate()
+
+                    count shouldBe entitiesSize
+                }
+            }
+
+            "주의 사항" - {
+                "MisMatch" {
+                    tx {
+                        val users = createQuery("select u from User u", User::class.java)
+                            .resultList
+
+                        users.forEach {
+                            it.email = "hello@example.com"
+                        }
+                        // 쿼리 실행전 플러시
+
+                        // 영속성 컨텍스트 무시, DB 에 바로 요청
+                        createQuery("update User u set u.name = 'bulk'")
+                            .executeUpdate()
+
+                        users.forEach {
+                            it.name shouldNotBe "bulk"
+                        }
+
+                        val user = find(User::class.java, users[0].sequence)
+                        user.name shouldNotBe "bulk"
+                    }
+
+                    tx {
+                        val users = createQuery("select u from User u", User::class.java)
+                            .resultList
+
+                        users.forEach {
+                            it.name shouldBe "bulk"
+                        }
+                    }
+                }
+
+                "refresh" {
+                    tx {
+                        val users = createQuery("select u from User u", User::class.java)
+                            .resultList
+
+                        // 영속성 컨텍스트 무시, DB 에 바로 요청
+                        createQuery("update User u set u.name = 'bulk'")
+                            .executeUpdate()
+
+                        users.forEach {
+                            refresh(it) // DB 에서 다시 조회
+                            it.name shouldBe "bulk"
+                        }
+                    }
+                }
+
+                "벌크 연산 먼저 실행" {
+                    tx {
+                        // 영속성 컨텍스트 무시, DB 에 바로 요청
+                        createQuery("update User u set u.name = 'bulk'")
+                            .executeUpdate()
+
+                        val users = createQuery("select u from User u", User::class.java)
+                            .resultList
+
+                        users.forEach {
+                            refresh(it) // DB 에서 다시 조회
+                            it.name shouldBe "bulk"
+                        }
+                    }
+                }
+
+                "clear" {
+                    tx {
+                        val users = createQuery("select u from User u", User::class.java)
+                            .resultList
+
+                        // 영속성 컨텍스트 무시
+                        createQuery("update User u set u.name = 'bulk'")
+                            .executeUpdate()
+
+                        val user1 = find(User::class.java, users[0].sequence)
+                        user1.name shouldNotBe "bulk"
+
+                        // 영속성 초기화
+                        clear()
+
+                        val user2 = find(User::class.java, users[0].sequence)
+                        user2.name shouldBe "bulk"
                     }
                 }
             }
