@@ -14,6 +14,8 @@ import javax.persistence.*
  */
 @Entity
 @Table(name = "user")
+@NamedQuery(name = "User.findDistinctNames",
+    query = "select distinct u.name from User u")
 class User(
     @Id @GeneratedValue(strategy = GenerationType.AUTO) val sequence: Long? = null,
     @Column val name: String,
