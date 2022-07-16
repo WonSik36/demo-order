@@ -20,3 +20,16 @@ spring:
 logging.level:
   org.hibernate.type.descriptor.sql: trace
   org.springframework: info
+
+---
+# actuator
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,shutdown,beans
