@@ -1,6 +1,7 @@
 package me.wonsik.order.demo.order.domain.user
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDate
@@ -21,4 +22,11 @@ interface UserRepository: JpaRepository<User, Long> {
     @Query("select u from User u where u.birthDay < :birthDay")
     fun findUserByBirthDayBefore(@Param("birthDay") birthDay: LocalDate): List<User>
 
+
+
+    @Modifying(clearAutomatically = true)
+    @Query("update User u set u.name = :name where u.sequence in :sequences")
+    fun changeUserNameWhereSequenceIn(@Param("sequences") sequences: List<Long>, @Param("name") name: String): Int
+
+    fun findUserByEmail(email: String): User
 }

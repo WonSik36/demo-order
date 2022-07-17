@@ -1,26 +1,50 @@
 package me.wonsik.order.demo.order.jpa.ch12
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import me.wonsik.order.demo.order.adapter.querydsl.QueryDslConfig
 import me.wonsik.order.demo.order.domain.common.Address
 import me.wonsik.order.demo.order.domain.menu.MenuRepository
+import me.wonsik.order.demo.order.domain.order.Order
 import me.wonsik.order.demo.order.domain.order.OrderRepository
+import me.wonsik.order.demo.order.domain.order.OrderStatus
+import me.wonsik.order.demo.order.domain.order.QOrder
+import me.wonsik.order.demo.order.domain.restaurant.Restaurant
 import me.wonsik.order.demo.order.domain.restaurant.RestaurantRepository
 import me.wonsik.order.demo.order.domain.user.Sex
 import me.wonsik.order.demo.order.domain.user.User
 import me.wonsik.order.demo.order.domain.user.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.context.annotation.Import
+import org.springframework.dao.EmptyResultDataAccessException
+import org.springframework.dao.IncorrectResultSizeDataAccessException
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import java.time.LocalDate
+import javax.persistence.EntityManager
+import javax.persistence.EntityManagerFactory
+import javax.persistence.PersistenceContext
+import javax.persistence.PersistenceUnit
 
 
 /**
  * @author 정원식 (wonsik.cheung)
  */
 @DataJpaTest
+@Import(QueryDslConfig::class)
 internal class JpaRepositoryTest : FreeSpec() {
     override fun extensions() = listOf(SpringExtension)
+
+    @PersistenceUnit
+    private lateinit var emf: EntityManagerFactory
+    @PersistenceContext
+    private lateinit var em: EntityManager
 
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -30,6 +54,7 @@ internal class JpaRepositoryTest : FreeSpec() {
     private lateinit var menuRepository: MenuRepository
     @Autowired
     private lateinit var orderRepository: OrderRepository
+
 
     init {
         "쿼리 메소드" - {
@@ -56,6 +81,80 @@ internal class JpaRepositoryTest : FreeSpec() {
                 val results = userRepository.findUserByBirthDayBefore(LocalDate.of(2002, 6, 3))
                 results shouldHaveSize 2
             }
+        }
+
+
+
+        "벌크성 수정 쿼리" {
+            userRepository.deleteAllInBatch()
+
+            val users = makeUsers(5)
+            userRepository.saveAll(users)
+
+            val sequences = users.map { it.sequence }.filterNotNull()
+
+            val count = userRepository.changeUserNameWhereSequenceIn(sequences, "Hello")
+            count shouldBe 5
+            // Persistence Context Cleared
+
+            users.forEach { it.name shouldNotBe "Hello"}
+
+            users.mapNotNull { userRepository.findById(it.sequence!!).orElse(null) }
+                .forEach { it.name shouldBe "Hello" }
+        }
+
+        "반환 타입" - {
+            "값이 없는 경우 - EmptyResultDataAccessException" {
+                shouldThrow<EmptyResultDataAccessException> {
+                    userRepository.findUserByEmail("example@example.com")
+                }
+            }
+
+            "단건" {
+                val users = makeUsers(1)
+                userRepository.saveAll(users)
+
+                val user = userRepository.findUserByEmail("example@example.com")
+
+                user shouldNotBe null
+            }
+
+            "다건인 경우 - IncorrectResultSizeDataAccessException" {
+                val users = makeUsers(2)
+                userRepository.saveAll(users)
+
+                shouldThrow<IncorrectResultSizeDataAccessException> {
+                    userRepository.findUserByEmail("example@example.com")
+                }
+            }
+        }
+
+        "페이징과 정렬" {
+            val users = makeUsers(25)
+            userRepository.saveAll(users)
+
+            val pageable: Pageable = PageRequest.of(1, 10, Sort.by(Sort.Order.desc( "name"), Sort.Order.asc("birthDay")))
+
+            val page = userRepository.findAll(pageable)
+
+            page.number shouldBe 1                              // 현재 페이지
+            page.size shouldBe 10                               // 페이지 크기
+            page.totalPages shouldBe 3                          // 전체 페이지 수
+            page.numberOfElements shouldBe 10                   // 현재 페이지에 나올 데이터 수
+            page.totalElements shouldBe 25                      // 전체 데이터 수
+
+            page.hasPrevious() shouldBe true                    // 이전 페이지 존재 여부
+            page.isFirst shouldBe false                         // 첫번째 페이지 여부
+            page.hasNext() shouldBe true                        // 다음 페이지 존재 여부
+            page.isLast shouldBe false                          // 마지막 페이지 여부
+
+            val next: Pageable = page.nextPageable()            // 다음 페이지 객체, 현재 마지막 페이지인 경우 => Pageable.unpaged()
+            val prev: Pageable = page.previousPageable()        // 이전 페이지 객체, 현재 첫번째 페이지인 경우 => Pageable.unpaged()
+
+            val retrievedUsers: List<User> = page.content       // 조회된 데이터
+            page.hasContent() shouldBe true                     // 조회된 데이터 존재여부
+            val sort: Sort = page.sort                          // 정렬 정보
+            sort.getOrderFor("name") shouldNotBe null
         }
     }
 
