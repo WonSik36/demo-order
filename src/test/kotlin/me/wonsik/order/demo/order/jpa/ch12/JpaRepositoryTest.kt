@@ -156,6 +156,44 @@ internal class JpaRepositoryTest : FreeSpec() {
             val sort: Sort = page.sort                          // 정렬 정보
             sort.getOrderFor("name") shouldNotBe null
         }
+
+
+
+        "QueryDsl" - {
+            "QuerydslPredicateExecutor" {
+                val order = makeOrder()
+
+                em.clear()
+
+                val result = orderRepository.findOne(QOrder.order.status.eq(OrderStatus.PREPARING)).get()
+                result.user.isLoaded() shouldBe true
+                result.orderMenus.isLoaded() shouldBe false
+            }
+
+            "QuerydslRepositorySupport" {
+                val order = makeOrder()
+
+                em.clear()
+
+                val result = orderRepository.findFetchedOrderById(order.sequence!!).get()
+                result.user.isLoaded() shouldBe true
+                result.orderMenus.isLoaded() shouldBe true
+                result.orderMenus[0].menu.isLoaded() shouldBe true
+                result.orderMenus[0].menu.restaurant.isLoaded() shouldBe true
+            }
+
+            "JPAQueryFactory" {
+                val order = makeOrder()
+
+                em.clear()
+
+                val result = orderRepository.findFetchedOrderByIdContains(listOf(order.sequence!!))[0]
+                result.user.isLoaded() shouldBe true
+                result.orderMenus.isLoaded() shouldBe true
+                result.orderMenus[0].menu.isLoaded() shouldBe true
+                result.orderMenus[0].menu.restaurant.isLoaded() shouldBe true
+            }
+        }
     }
 
     private val address = Address("state", "city", "street", "subStreet", 12345)
@@ -165,6 +203,31 @@ internal class JpaRepositoryTest : FreeSpec() {
     private fun makeUser(idx: Int) =
         User(
             null, "name$idx", birthDay = LocalDate.of(2002, 6, idx % 29),
-            Sex.values()[idx % 2], email = "example${idx}@example.com", address
+            Sex.values()[idx % 2], email = "example@example.com", address
         )
+
+    private fun makeRestaurantsAndMenus(size: Int) = (1..size).map { makeRestaurantAndMenu(it) }.toList()
+
+    private fun makeRestaurantAndMenu(idx: Int): Restaurant =
+        with(Restaurant(null, "restaurant[$idx]", address)) {
+            makeMenu("menu_${idx}_1", "description1")
+            makeMenu("menu_${idx}_2", "description2")
+            this
+        }
+
+    private fun makeOrder(): Order {
+        val user = makeUser(1)
+        userRepository.saveAndFlush(user)
+
+        val restaurant = makeRestaurantAndMenu(1)
+        restaurantRepository.saveAndFlush(restaurant)
+
+        val order = Order(user = user, status = OrderStatus.PREPARING)
+        order.addMenu(restaurant.menus[0])
+        orderRepository.saveAndFlush(order)
+
+        return order
+    }
+
+    private fun Any.isLoaded() = emf.persistenceUnitUtil.isLoaded(this)
 }
