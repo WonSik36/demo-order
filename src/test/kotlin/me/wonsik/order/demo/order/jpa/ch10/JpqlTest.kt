@@ -9,6 +9,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import me.wonsik.order.demo.order.adapter.querydsl.QueryDslConfig
 import me.wonsik.order.demo.order.domain.common.Address
 import me.wonsik.order.demo.order.domain.menu.Menu
 import me.wonsik.order.demo.order.domain.order.Order
@@ -18,6 +19,7 @@ import me.wonsik.order.demo.order.domain.user.Sex
 import me.wonsik.order.demo.order.domain.user.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.context.annotation.Import
 import java.lang.IllegalArgumentException
 import java.time.LocalDate
 import javax.persistence.*
@@ -27,6 +29,7 @@ import javax.persistence.*
  * @author 정원식 (wonsik.cheung)
  */
 @DataJpaTest
+@Import(QueryDslConfig::class)
 internal class JpqlTest : FreeSpec() {
     override fun extensions() = listOf(SpringExtension)
 

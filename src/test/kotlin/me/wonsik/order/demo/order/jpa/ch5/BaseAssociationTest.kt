@@ -4,11 +4,13 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import me.wonsik.order.demo.order.adapter.querydsl.QueryDslConfig
 import me.wonsik.order.demo.order.domain.common.Address
 import me.wonsik.order.demo.order.domain.menu.Menu
 import me.wonsik.order.demo.order.domain.restaurant.Restaurant
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.context.annotation.Import
 import javax.persistence.EntityManager
 import javax.persistence.EntityManagerFactory
 
@@ -17,6 +19,7 @@ import javax.persistence.EntityManagerFactory
  * @author 정원식 (wonsik.cheung)
  */
 @DataJpaTest
+@Import(QueryDslConfig::class)
 internal class BaseAssociationTest : FreeSpec() {
     override fun extensions() = listOf(SpringExtension)
 

@@ -4,12 +4,15 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import me.wonsik.order.demo.order.adapter.querydsl.QueryDslConfig
 import me.wonsik.order.demo.order.domain.common.Address
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.context.annotation.Import
 import java.time.LocalDate
 
 @DataJpaTest
+@Import(QueryDslConfig::class)
 internal class UserRepositoryTest : BehaviorSpec() {
     override fun extensions() = listOf(SpringExtension)
 
