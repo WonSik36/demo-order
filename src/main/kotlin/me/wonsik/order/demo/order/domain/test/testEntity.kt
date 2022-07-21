@@ -7,6 +7,12 @@ import javax.persistence.*
 /* Chapter 14 */
 @Entity
 @Convert(converter = BooleanToYnConverter::class, attributeName = "vip")
+@NamedEntityGraph(name = "TestItem.withDiamonds", attributeNodes = [
+    NamedAttributeNode("diamonds", subgraph = "duck"),
+], subgraphs = [NamedSubgraph(name = "duck", attributeNodes = [
+    NamedAttributeNode("duck")
+])]
+)
 class TestItem(
     @GeneratedValue
     @Id
@@ -60,6 +66,52 @@ class TestDiamond (
     val sequence: Long? = null,
     @ManyToOne
     @JoinColumn(name = "item_sequence")
-    val item: TestItem
+    val item: TestItem,
+    @OneToOne(optional = true)
+    @JoinColumn(name = "duck_sequence")
+    val duck: Duck? = null
 ){}
 
+@Entity
+class Duck (
+    @GeneratedValue
+    @Id
+    val sequence: Long?,
+    @Column
+    var name: String
+) {
+    @PrePersist
+    fun prePersist() {
+        println("Duck#prePersist sequence=${sequence}, name=${name}")
+    }
+
+    @PostPersist
+    fun postPersist() {
+        println("Duck#postPersist sequence=${sequence}, name=${name}")
+    }
+
+    @PostLoad
+    fun postLoad() {
+        println("Duck#postLoad sequence=${sequence}, name=${name}")
+    }
+
+    @PreUpdate
+    fun preUpdate() {
+        println("Duck#preUpdate sequence=${sequence}, name=${name}")
+    }
+
+    @PostUpdate
+    fun postUpdate() {
+        println("Duck#postUpdate sequence=${sequence}, name=${name}")
+    }
+
+    @PreRemove
+    fun preRemove() {
+        println("Duck#preRemove sequence=${sequence}, name=${name}")
+    }
+
+    @PostRemove
+    fun postRemove() {
+        println("Duck#postRemove sequence=${sequence}, name=${name}")
+    }
+}

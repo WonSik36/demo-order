@@ -4,15 +4,15 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
 import me.wonsik.order.demo.order.adapter.querydsl.QueryDslConfig
-import me.wonsik.order.demo.order.domain.test.TestAlbum
-import me.wonsik.order.demo.order.domain.test.TestBook
-import me.wonsik.order.demo.order.domain.test.TestCherry
-import me.wonsik.order.demo.order.domain.test.TestItem
+import me.wonsik.order.demo.order.domain.test.*
 import org.hibernate.collection.internal.PersistentBag
 import org.hibernate.collection.internal.PersistentList
 import org.hibernate.collection.internal.PersistentSet
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
+import javax.persistence.EntityGraph
 import javax.persistence.EntityManager
 import javax.persistence.EntityManagerFactory
 import javax.persistence.PersistenceUnit
@@ -28,6 +28,14 @@ class CollectionTest : FreeSpec() {
 
     @PersistenceUnit
     private lateinit var emf: EntityManagerFactory
+
+    @Autowired
+    @Qualifier("entity.graph.static")
+    private lateinit var staticEntityGraph: EntityGraph<TestItem>
+
+    @Autowired
+    @Qualifier("entity.graph.dynamic")
+    private lateinit var dynamicEntityGraph: EntityGraph<TestItem>
 
     init {
         "Collections" - {
@@ -197,6 +205,87 @@ class CollectionTest : FreeSpec() {
                 }
             }
         }
+
+        "EntityListener" {
+            var duck : Duck? = null
+
+            tx {
+                duck = Duck(null, "Duck")
+
+                // PrePersist, sequence=null
+                persist(duck)
+                // PostPersist
+            }
+
+            tx {
+                val newDuck = merge(duck)
+                // PostLoad
+
+                // PreUpdate
+                newDuck?.name = "hello"
+                flush()
+                // PostUpdate
+
+                // PreRemove
+                remove(newDuck)
+                flush()
+                // PreRemove
+            }
+        }
+
+        "EntityGraph" - {
+            "NamedEntityGraph" {
+                var sequence: Long? = null
+                tx {
+                    val duck = Duck(null, "Duck")
+                    persist(duck)
+
+                    val item = TestItem(null)
+                    persist(item)
+                    sequence = item.sequence
+
+                    val diamond = TestDiamond(null, item, duck)
+                    persist(diamond)
+
+                    item.diamonds?.add(diamond)
+                }
+
+                tx {
+                    val hints = hashMapOf<String, Any>("javax.persistence.fetchgraph" to staticEntityGraph)
+                    val item = find(TestItem::class.java, sequence, hints)
+
+                    item.cherries?.isLoaded() shouldBe false
+                    item.diamonds?.isLoaded() shouldBe true
+                    item.diamonds?.get(0)?.duck?.isLoaded() shouldBe true
+                }
+            }
+
+            "동적 엔티티 그래프" {
+                var sequence: Long? = null
+                tx {
+                    val duck = Duck(null, "Duck")
+                    persist(duck)
+
+                    val item = TestItem(null)
+                    persist(item)
+                    sequence = item.sequence
+
+                    val diamond = TestDiamond(null, item, duck)
+                    persist(diamond)
+
+                    item.diamonds?.add(diamond)
+                }
+
+                tx {
+                    val hints = hashMapOf<String, Any>("javax.persistence.fetchgraph" to dynamicEntityGraph)
+                    val item = find(TestItem::class.java, sequence, hints)
+
+                    item.cherries?.isLoaded() shouldBe false
+                    item.diamonds?.isLoaded() shouldBe true
+                    item.diamonds?.get(0)?.duck?.isLoaded() shouldBe true
+                }
+            }
+        }
     }
 
 
@@ -216,4 +305,6 @@ class CollectionTest : FreeSpec() {
             em.close()
         }
     }
+
+    private fun Any.isLoaded() = emf.persistenceUnitUtil.isLoaded(this)
 }
