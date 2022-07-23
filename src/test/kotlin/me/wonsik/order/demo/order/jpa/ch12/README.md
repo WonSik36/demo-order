@@ -65,14 +65,14 @@ public interface JpaRepository<T, ID> extends PagingAndSortingRepository<T, ID>,
 ### 스프링 Data JPA 가 사용하는 구현체
 * 스프링 Data JPA 가 제공하는 공통 인터페이스는 `org.springframework.data.jpa.repository.support.SimpleJpaRepository` 클래스가 구현함
 
-### `@Repository`
+#### `@Repository`
 * JPA 예외를 스프링이 추상화한 예외로 변환
 
-### `@Transactional`
+#### `@Transactional`
 * JPA 의 모든 변경은 트랜잭션 안에서 이루어져야 함
 * 서비스 계층에서 트랜잭션을 시작하지 않으면 리포지토리에서 시작
 * 서비스 계층에서 트랜잭션을 시작시 해당 트랜잭션 사용
 
-### `save(S entity)`
+#### `save(S entity)`
 * 새로운 엔티티면 저장, 이미 있는 엔티티면 병합
 * 식별자가 객체인 경우 null, 식별자가 기본 타입인 경우 0 이면 새로운 엔티티로 판단
