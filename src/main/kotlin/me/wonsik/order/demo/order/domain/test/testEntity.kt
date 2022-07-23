@@ -115,3 +115,10 @@ class Duck (
         println("Duck#postRemove sequence=${sequence}, name=${name}")
     }
 }
+
+@Entity
+class Spider (
+    @Id
+    val name: String,
+    val age: Int
+)
