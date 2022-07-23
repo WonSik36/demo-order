@@ -1,6 +1,12 @@
 package me.wonsik.order.demo.order.domain.test
 
+import au.com.console.kassava.kotlinEquals
+import au.com.console.kassava.kotlinHashCode
+import au.com.console.kassava.kotlinToString
 import me.wonsik.order.demo.order.adapter.jpa.BooleanToYnConverter
+import org.hibernate.annotations.BatchSize
+import org.hibernate.annotations.Fetch
+import org.hibernate.annotations.FetchMode
 import javax.persistence.*
 
 
@@ -121,4 +127,49 @@ class Spider (
     @Id
     val name: String,
     val age: Int
+) {
+
+    override fun equals(other: Any?) = kotlinEquals(other = other, properties = equalsAndHashCodeProperties)
+    override fun hashCode() = kotlinHashCode(properties = equalsAndHashCodeProperties)
+    override fun toString() = kotlinToString(properties = toStringProperties)
+
+    companion object {
+        private val equalsAndHashCodeProperties = arrayOf(Spider::name)
+        private val toStringProperties = arrayOf(Spider::name, Spider::age)
+    }
+}
+
+@Entity
+class Frog (
+    @GeneratedValue
+    @Id
+    val sequence: Long? = null,
+
+    @BatchSize(size = 10)
+    @OneToMany(mappedBy = "frog", fetch = FetchType.EAGER)
+    val weakFrogs: MutableList<WeakFrog> = arrayListOf(),
+
+    @Fetch(FetchMode.SUBSELECT)
+    @OneToMany(mappedBy = "frog", fetch = FetchType.EAGER)
+    val fatFrogs: MutableList<FatFrog> = arrayListOf(),
+)
+
+@Entity
+class WeakFrog (
+    @GeneratedValue
+    @Id
+    val sequence: Long? = null,
+    @ManyToOne
+    @JoinColumn(name = "frog_sequence")
+    val frog: Frog? = null
+)
+
+@Entity
+class FatFrog (
+    @GeneratedValue
+    @Id
+    val sequence: Long? = null,
+    @ManyToOne
+    @JoinColumn(name = "frog_sequence")
+    val frog: Frog? = null
 )
