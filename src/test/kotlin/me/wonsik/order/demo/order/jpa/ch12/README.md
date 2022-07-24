@@ -76,3 +76,11 @@ public interface JpaRepository<T, ID> extends PagingAndSortingRepository<T, ID>,
 #### `save(S entity)`
 * 새로운 엔티티면 저장, 이미 있는 엔티티면 병합
 * 식별자가 객체인 경우 null, 식별자가 기본 타입인 경우 0 이면 새로운 엔티티로 판단
+
+### 힌트와 락
+#### 힌트
+* JPA 구현체에게 힌트 전달 필요시 사용
+* `@QueryHint`, `@QueryHints` 사용
+
+#### 락
+* `@Lock` 사용
