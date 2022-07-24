@@ -173,3 +173,34 @@ class FatFrog (
     @JoinColumn(name = "frog_sequence")
     val frog: Frog? = null
 )
+
+@Entity
+class TestPost (
+    @GeneratedValue
+    @Id
+    val sequence: Long? = null,
+    val name: String,
+    @OneToOne
+    @JoinColumn(name = "like_sequence")
+    var like: TestLike? = null,
+    @Version
+    val version: Long = 0
+)
+
+@Entity
+class TestLike (
+    @GeneratedValue
+    @Id
+    val sequence: Long? = null,
+    var count: Long = 0,
+    @Version
+    val version: Long = 0,
+) {
+    fun plusCount(count: Long = 1) {
+        this.count = this.count + count
+    }
+
+    fun minusCount(count: Long = 1) {
+        this.count = this.count - count
+    }
+}
